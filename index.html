@@ -1,208 +1,129 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <title>一筆書きパズル｜脳トレ無料ゲーム</title>
-  <meta name="description" content="一筆書きパズルは、すべてのマスを一度だけ通るルートを見つける無料のブラウザゲームです。操作説明とルールを紹介しています。">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-
-  <!-- ✅ AdSense サイト所有権確認用メタタグ -->
-  <meta name="google-site-verification" content="（←AdSenseで発行されたコードを入れてください）" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>サイトハブ（リンク集）</title>
 
   <style>
     body {
-      text-align: center;
       font-family: sans-serif;
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 20px;
-      line-height: 1.6;
+      margin: 20px;
+      background: #f5f5f5;
     }
-    canvas { border: 2px solid black; margin-top: 10px; }
-    .controls { margin-top: 10px; }
-    button { margin: 3px; padding: 6px 12px; }
-    footer {
-      margin-top: 40px;
+
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    h2 {
+      max-width: 980px;
+      margin: 0 auto 10px auto;
+      padding: 8px 0 8px 4px;
+    }
+
+    /* ★ パズル系・カード系のレイアウトを完全に揃える */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr); /* PCで3列固定 */
+      gap: 20px;
+      width: 100%;
+      max-width: 980px;
+      margin: 0 auto;
+      align-items: start;
+    }
+
+    /* スマホ対応 */
+    @media (max-width: 800px) {
+      .cards {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    @media (max-width: 520px) {
+      .cards {
+        grid-template-columns: repeat(1, 1fr);
+      }
+    }
+
+    /* カード本体 */
+    .card {
+      background: white;
+      border-radius: 8px;
+      padding: 16px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      transition: 0.2s;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 150px;
+      cursor: pointer;
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    }
+
+    .card a {
+      text-decoration: none;
+      color: #333;
+      font-weight: bold;
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .card p {
+      margin: 0;
+      color: #666;
       font-size: 14px;
-      border-top: 1px solid #ccc;
-      padding-top: 10px;
-      color: #555;
     }
   </style>
 </head>
 
 <body>
-  <h1>一筆書きパズル</h1>
-  <p>
-    一筆書きパズルは、すべてのブロックを一度だけ通ってゴールすることを目指す無料の脳トレゲームです。<br>
-    マウスまたはタップで線を引き、障害ブロックを避けながら全マスを通過するとクリアになります。
-  </p>
 
-  <h2>遊び方</h2>
-  <ol style="text-align:left; display:inline-block;">
-    <li>スタート地点をクリック（またはタップ）します。</li>
-    <li>「スタート」ボタンで探索を開始します。</li>
-    <li>右クリックで障害ブロックを設置／削除できます。</li>
-    <li>すべてのマスを一度だけ通過できれば成功です！</li>
-  </ol>
+  <h1>コンテンツ一覧</h1>
 
-  <div class="controls">
-    <label>行: <input type="number" id="rows" value="5" min="2" max="15"></label>
-    <label>列: <input type="number" id="cols" value="5" min="2" max="15"></label>
-    <button id="generate">盤面生成</button>
-    <button id="solve">スタート</button>
-    <button id="reset">リセット</button>
+  <h2>パズル系</h2>
+  <div class="cards">
+    <div class="card">
+      <a href="ABCPlace.html">ABCプレース / ABCPlace</a>
+      <p>ナンプレの親戚的なゲーム</p>
+    </div>
+
+    <div class="card">
+      <a href="Nonogram.html">イラストロジック / Nonogram</a>
+      <p>お絵かきロジックなどの呼び方もある</p>
+    </div>
+
+    <div class="card">
+      <a href="hakoiri.html">箱入り娘 / Klotski</a>
+      <p>スライドパズルの一種。海外では Klotski と呼ばれている</p>
+    </div>
+
+    <div class="card">
+      <a href="hitohude.html">一筆書きパズル / One Stroke Puzzle</a>
+      <p>数学的には「オイラー路問題」と呼ばれるらしい</p>
+    </div>
   </div>
 
-  <canvas id="board" width="400" height="400"></canvas>
-
-  <h2>このサイトについて</h2>
-  <p>
-    このサイトは無料で遊べるパズル・脳トレ系ゲームを公開しています。  
-    今後も一筆書きや数字パズルなどを追加予定です。  
-    改善のご意見・不具合報告は下記よりご連絡ください。
-  </p>
-
-  <footer>
-    <a href="privacy.html">プライバシーポリシー</a> ｜ 
-    お問い合わせ: <a href="mailto:midannsann@gmail.com">midannsann@gmail.com</a><br>
-    &copy; 2025 midannsannsolver.netlify.app
-  </footer>
+  <h2>カード系</h2>
+  <div class="cards">
+    <div class="card">
+      <a href="七並べ.html">七並べ / Sevens (Card game)</a>
+      <p>七並べ。トンネルなどのルールは未対応</p>
+    </div>
+  </div>
 
   <script>
-  const canvas = document.getElementById('board');
-  const ctx = canvas.getContext('2d');
-  const generateBtn = document.getElementById('generate');
-  const solveBtn = document.getElementById('solve');
-  const resetBtn = document.getElementById('reset');
-  let rows = 5, cols = 5;
-  let grid = [];
-  let start = null;
-  let cellSize;
-  let path = [];
-
-  function createGrid() {
-    grid = [];
-    for (let r = 0; r < rows; r++) {
-      const row = [];
-      for (let c = 0; c < cols; c++) {
-        row.push(0); // 0=空白, 1=障害
-      }
-      grid.push(row);
-    }
-    start = null;
-    draw();
-  }
-
-  function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    cellSize = Math.min(canvas.width / cols, canvas.height / rows);
-    ctx.lineWidth = 1;
-    for (let r = 0; r < rows; r++) {
-      for (let c = 0; c < cols; c++) {
-        ctx.strokeStyle = "black";
-        ctx.strokeRect(c * cellSize, r * cellSize, cellSize, cellSize);
-        if (grid[r][c] === 1) {
-          ctx.fillStyle = "gray";
-          ctx.fillRect(c * cellSize, r * cellSize, cellSize, cellSize);
-        }
-      }
-    }
-    if (start) {
-      ctx.fillStyle = "red";
-      ctx.beginPath();
-      ctx.arc(
-        start.c * cellSize + cellSize / 2,
-        start.r * cellSize + cellSize / 2,
-        cellSize / 4,
-        0, Math.PI * 2
-      );
-      ctx.fill();
-    }
-    if (path.length > 0) {
-      ctx.strokeStyle = "blue";
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.moveTo(
-        path[0].c * cellSize + cellSize / 2,
-        path[0].r * cellSize + cellSize / 2
-      );
-      for (const p of path) {
-        ctx.lineTo(
-          p.c * cellSize + cellSize / 2,
-          p.r * cellSize + cellSize / 2
-        );
-      }
-      ctx.stroke();
-    }
-  }
-
-  canvas.addEventListener('click', e => {
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const c = Math.floor(x / cellSize);
-    const r = Math.floor(y / cellSize);
-    if (grid[r][c] === 1) return;
-    start = {r, c};
-    draw();
-  });
-
-  canvas.addEventListener('contextmenu', e => {
-    e.preventDefault();
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const c = Math.floor(x / cellSize);
-    const r = Math.floor(y / cellSize);
-    if (start && start.r === r && start.c === c) return;
-    grid[r][c] = grid[r][c] === 1 ? 0 : 1;
-    draw();
-  });
-
-  generateBtn.onclick = () => {
-    rows = parseInt(document.getElementById('rows').value);
-    cols = parseInt(document.getElementById('cols').value);
-    createGrid();
-  };
-
-  resetBtn.onclick = () => {
-    path = [];
-    draw();
-  };
-
-  solveBtn.onclick = () => {
-    if (!start) {
-      alert("スタート地点をクリックして指定してください。");
-      return;
-    }
-    const visited = Array.from({length: rows}, () => Array(cols).fill(false));
-    path = [];
-    const total = rows * cols - grid.flat().filter(v => v === 1).length;
-    const result = dfs(start.r, start.c, visited, total);
-    if (!result) alert("一筆書きは見つかりませんでした。");
-    draw();
-  };
-
-  function dfs(r, c, visited, remain) {
-    if (grid[r][c] === 1 || visited[r][c]) return false;
-    visited[r][c] = true;
-    path.push({r, c});
-    if (path.length === remain) return true;
-
-    const dirs = [[1,0],[-1,0],[0,1],[0,-1]];
-    for (const [dr, dc] of dirs) {
-      const nr = r + dr, nc = c + dc;
-      if (nr >= 0 && nr < rows && nc >= 0 && nc < cols && !visited[nr][nc] && grid[nr][nc] === 0) {
-        if (dfs(nr, nc, visited, remain)) return true;
-      }
-    }
-    path.pop();
-    visited[r][c] = false;
-    return false;
-  }
-
-  createGrid();
+    document.querySelectorAll('.card').forEach(card => {
+      card.addEventListener('click', () => {
+        const link = card.querySelector('a');
+        if (link) link.click();
+      });
+    });
   </script>
+
 </body>
 </html>
