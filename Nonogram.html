@@ -1,0 +1,452 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>単色イラストロジック（ノノグラム）</title>
+<style>
+  :root { --cell:28px; --fg:#111; --line:1px; --lineColor:#000; --hintLine:#22c55e; }
+  * { box-sizing:border-box; }
+  body{ font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif; margin:0; color:#111; background:#f7f7f9; }
+  header{ padding:16px; background:#fff; position:sticky; top:0; box-shadow:0 2px 10px rgba(0,0,0,.06); z-index:1; }
+  h1{ font-size:18px; margin:0 0 6px; }
+  .wrap{ display:grid; gap:16px; padding:16px; grid-template-columns:320px 1fr; align-items:start; }
+  .card{ background:#fff; border-radius:14px; box-shadow:0 10px 30px rgba(0,0,0,.06); padding:14px; }
+  .card h2{ font-size:16px; margin:0 0 10px; }
+  textarea{ width:100%; height:210px; resize:vertical; font:14px ui-monospace,SFMono-Regular,Menlo,monospace; padding:8px; border-radius:8px; border:1px solid #ddd; background:#fcfcfd; }
+  .row{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .btns{ display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+  button{ padding:8px 12px; border:none; border-radius:10px; background:#222; color:#fff; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,.12); }
+  button.ghost{ background:transparent; color:#111; border:1px solid #ddd; }
+  .status{ font-size:13px; color:#444; margin-top:8px; min-height:18px; }
+  .inline{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .range{ width:220px; }
+  .boardWrap{ overflow:auto; padding:8px; }
+
+  /* ===== 盤面：外周は黒の1px枠、内部格子は box-shadow（寸法に影響しない） ===== */
+  .frame{ display:grid; grid-template-columns:auto 1fr; grid-template-rows:auto 1fr; gap:0; background:transparent; }
+  .grid{
+    display:grid; gap:0; padding:0; width:max-content; background:transparent;
+    border: var(--line) solid var(--lineColor);
+  }
+  .cell{
+    width:var(--cell); height:var(--cell);
+    display:grid; place-items:center; line-height:1; user-select:none;
+    background:#fff; border:none; border-radius:0;
+    box-shadow:
+      inset calc(var(--line) * -1) 0 0 0 var(--lineColor),
+      inset 0 calc(var(--line) * -1) 0 0 var(--lineColor); /* 右・下の線 */
+  }
+  .cell.filled{ background:#111; color:#fff; }
+  .cell.empty{  background:#f1f5f9; color:#64748b; }
+
+  /* ===== ヒント：セルはbox-shadow緑。外周は .hintBox の緑枠 ===== */
+  /* これを置換：ヒント外枠は中身サイズにピッタリ合わせる */
+.hintBox{
+  display: inline-block;
+  border: var(--line) solid var(--hintLine);
+  /* ← 追加 */
+  width: max-content;
+  height: max-content;
+  box-sizing: content-box; /* 枠線ぶんを幅計算に含めない（はみ出し防止） */
+}
+
+/* ← 追加：ヒントのグリッド自体も中身サイズに縮む */
+.topHints, .leftHints{
+  width: max-content;
+  height: max-content;
+}
+
+/* ← 追加：フレーム内の各要素が「伸びて」広がらないよう固定 */
+.frame > #corner,
+.frame > #topBox,
+.frame > #leftBox,
+.frame > #grid{
+  justify-self: start;
+  align-self: start;
+}
+
+  .topHints,.leftHints{ display:grid; gap:0; background:transparent; }
+  .hintCell{
+    width:var(--cell); height:var(--cell);
+    display:grid; place-items:center; line-height:1; user-select:none;
+    background:#fff; border:none;
+    box-shadow:
+      inset calc(var(--line) * -1) 0 0 0 var(--hintLine),
+      inset 0 calc(var(--line) * -1) 0 0 var(--hintLine);
+  }
+  /* 盤面と接する辺は重ねない（最下段=下線OFF / 最右列=右線OFF） */
+  .hint-no-b{ box-shadow: inset calc(var(--line) * -1) 0 0 0 var(--hintLine) !important; }
+  .hint-no-r{ box-shadow: inset 0 calc(var(--line) * -1) 0 0 var(--hintLine) !important; }
+  .hintCell.empty{ background:#f8fff4; color:#166534; }
+
+  /* 左上スペーサ（外枠ぶんも含めてサイズ合わせ） */
+  #corner{ display:inline-block; }
+</style>
+</head>
+<body>
+<header>
+  <h1>単色イラストロジック（ノノグラム）</h1>
+  <div class="inline">
+    <label>セル表示サイズ: <span id="cellSizeVal">28</span>px</label>
+    <input id="cellSize" class="range" type="range" min="12" max="42" step="1" value="28" />
+  </div>
+</header>
+
+<div class="wrap">
+  <section class="card">
+    <h2>ヒント入力</h2>
+    <div class="row">
+      <div>
+        <div style="font-weight:600; margin-bottom:6px">行ヒント（1行ごと・空白/カンマ、0=なし）</div>
+        <textarea id="rows" placeholder="例&#10;0&#10;1 1&#10;1&#10;1 1&#10;0"></textarea>
+      </div>
+      <div>
+        <div style="font-weight:600; margin-bottom:6px">列ヒント（1行ごと・空白/カンマ、0=なし）</div>
+        <textarea id="cols" placeholder="例&#10;0&#10;1 1&#10;1&#10;1 1&#10;0"></textarea>
+      </div>
+    </div>
+    <div class="btns">
+      <button id="solve">解く</button>
+      <button id="reset" class="ghost">盤面クリア</button>
+      <button id="sampleArrow" class="ghost">サンプル</button>
+
+    </div>
+    <div class="row" style="margin-top:10px">
+      <div><label>行数（最大40）</label><input id="rowsN" type="number" min="1" max="40" value="15" /></div>
+      <div><label>列数（最大40）</label><input id="colsN" type="number" min="1" max="40" value="15" /></div>
+    </div>
+    <div class="btns" style="margin-top:8px"><button id="applySize" class="ghost">サイズ反映（空ヒント0）</button></div>
+    <div id="status" class="status"></div>
+    <div style="font-size:12px;color:#555">ヒントは表セルクリック/ダブルクリックで編集、右クリックで0。セルはクリックで 未定→■→×、Shift+ドラッグで連続塗り。</div>
+  </section>
+
+  <section class="card">
+    <h2>盤面（クリックで操作）</h2>
+    <div class="boardWrap">
+      <div class="frame" id="frame">
+        <div id="corner"></div>
+        <div id="topBox" class="hintBox"><div id="topHints" class="topHints"></div></div>
+        <div id="leftBox" class="hintBox"><div id="leftHints" class="leftHints"></div></div>
+        <div id="grid" class="grid"></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+/* ===== 参照・状態 ===== */
+const U=0,F=1,E=-1;
+const $=s=>document.querySelector(s);
+const rowsTA=$('#rows'), colsTA=$('#cols');
+const gridEl=$('#grid'), frameEl=$('#frame'), cornerEl=$('#corner');
+const topBox=$('#topBox'), leftBox=$('#leftBox');
+const topHintsEl=$('#topHints'), leftHintsEl=$('#leftHints');
+const solveBtn=$('#solve'), resetBtn=$('#reset'), sampleBtn=$('#sample');
+
+const rowsN=$('#rowsN'), colsN=$('#colsN'), applySizeBtn=$('#applySize');
+const cellSizeInput=$('#cellSize'), cellSizeVal=$('#cellSizeVal');
+const statusEl=$('#status');
+
+let H=0,W=0,board=[],rowClues=[],colClues=[];
+let dragging=false, dragMode=F;
+
+function setStatus(m){ statusEl.textContent=m||''; }
+function parseClues(text){
+  const lines=text.trim().split(/\n+/).filter(Boolean);
+  return lines.map(line=>{
+    if(/^0\s*$/.test(line.trim())) return [];
+    return line.split(/[\s,]+/).filter(Boolean).map(Number).filter(n=>!Number.isNaN(n)&&n>=0);
+  });
+}
+function syncTextareas(){
+  rowsTA.value=rowClues.map(a=>a.length?a.join(' '):'0').join('\n');
+  colsTA.value=colClues.map(a=>a.length?a.join(' '):'0').join('\n');
+}
+
+/* ===== 盤面描画 ===== */
+function initBoard(h,w){ H=h; W=w; board=Array.from({length:H},()=>Array(W).fill(U)); renderAll(); }
+
+function renderGrid(){
+  gridEl.style.gridTemplateColumns=`repeat(${W}, var(--cell))`;
+  gridEl.innerHTML='';
+  const frag=document.createDocumentFragment();
+  for(let y=0;y<H;y++){
+    for(let x=0;x<W;x++){
+      const c=document.createElement('div');
+      c.className='cell'+(board[y][x]===F?' filled':board[y][x]===E?' empty':'');
+      c.dataset.x=x; c.dataset.y=y; c.title=`(${y+1},${x+1})`;
+      c.addEventListener('mousedown',e=>{
+        if(e.shiftKey){ dragging=true; dragMode=(board[y][x]===F?E:F); applyCell(y,x,dragMode); }
+        else cycleCell(y,x);
+      });
+      c.addEventListener('mouseenter',()=>{ if(dragging) applyCell(y,x,dragMode); });
+      frag.appendChild(c);
+    }
+  }
+  gridEl.appendChild(frag);
+    
+}
+window.addEventListener('mouseup',()=>dragging=false);
+function applyCell(y,x,val){ if(board[y][x]!==val){ board[y][x]=val; updateCell(y,x); } }
+function updateCell(y,x){ const c=gridEl.children[y*W+x]; if(c) c.className='cell'+(board[y][x]===F?' filled':board[y][x]===E?' empty':''); }
+function cycleCell(y,x){ board[y][x]=board[y][x]===U?F:board[y][x]===F?E:U; updateCell(y,x); }
+
+/* ===== ヒント描画（緑外枠＋セル box-shadow） ===== */
+function renderHints(){
+  const maxRowWidth = Math.max(1, ...rowClues.map(r=>r.length||1));
+  const maxColHeight= Math.max(1, ...colClues.map(c=>c.length||1));
+
+  // ヒント外枠ぶん（左右/上下で 2 * line）をフレーム計算に加味
+  const colSize = `calc(var(--cell)*${maxRowWidth} + var(--line)*2)`;
+  const rowSize = `calc(var(--cell)*${maxColHeight} + var(--line)*2)`;
+  frameEl.style.gridTemplateColumns = `${colSize} 1fr`;
+  frameEl.style.gridTemplateRows    = `${rowSize} 1fr`;
+
+  // 左上角スペーサも同寸に
+  cornerEl.style.width  = colSize;
+  cornerEl.style.height = rowSize;
+
+  // 上ヒントボックス
+  topHintsEl.innerHTML='';
+  topHintsEl.style.gridTemplateColumns = `repeat(${W}, var(--cell))`;
+  topHintsEl.style.gridTemplateRows    = `repeat(${maxColHeight}, var(--cell))`;
+  for(let r=0;r<maxColHeight;r++){
+    for(let x=0;x<W;x++){
+      const cc=colClues[x]||[];
+      const idx=r-(maxColHeight-cc.length);
+      const v=(idx>=0&&idx<cc.length)?cc[idx]:null;
+      const d=document.createElement('div');
+      d.className='hintCell'+(v==null?' empty':'');
+      if(v!=null) d.textContent=String(v);
+      d.dataset.col=String(x);
+      if(r===maxColHeight-1) d.classList.add('hint-no-b'); // 下辺は盤面枠と重ねない
+      topHintsEl.appendChild(d);
+    }
+  }
+
+  // 左ヒントボックス
+  leftHintsEl.innerHTML='';
+  leftHintsEl.style.gridTemplateColumns = `repeat(${maxRowWidth}, var(--cell))`;
+  leftHintsEl.style.gridTemplateRows    = `repeat(${H}, var(--cell))`;
+  for(let y=0;y<H;y++){
+    const rc=rowClues[y]||[];
+    for(let c=0;c<maxRowWidth;c++){
+      const idx=c-(maxRowWidth-rc.length);
+      const v=(idx>=0&&idx<rc.length)?rc[idx]:null;
+      const d=document.createElement('div');
+      d.className='hintCell'+(v==null?' empty':'');
+      if(v!=null) d.textContent=String(v);
+      d.dataset.row=String(y);
+      if(c===maxRowWidth-1) d.classList.add('hint-no-r'); // 右辺は盤面枠と重ねない
+      leftHintsEl.appendChild(d);
+    }
+  }
+
+  // 編集ハンドラ
+  topHintsEl.onclick = e => { const col=e.target?.dataset?.col; if(col!=null) editCol(+col); };
+  topHintsEl.oncontextmenu = e => { const col=e.target?.dataset?.col; if(col!=null){ e.preventDefault(); quickClearCol(+col); } };
+  topHintsEl.ondblclick = topHintsEl.onclick;
+
+  leftHintsEl.onclick = e => { const row=e.target?.dataset?.row; if(row!=null) editRow(+row); };
+  leftHintsEl.oncontextmenu = e => { const row=e.target?.dataset?.row; if(row!=null){ e.preventDefault(); quickClearRow(+row); } };
+  leftHintsEl.ondblclick = leftHintsEl.onclick;
+}
+
+function renderAll(){ renderGrid(); renderHints(); }
+
+/* ===== ヒント編集 ===== */
+function editRow(y){ const cur=rowClues[y].length?rowClues[y].join(' '):'0'; const s=prompt(`行${y+1} のヒント（空白/カンマ・0=なし）`,cur); if(s==null) return; rowClues[y]=parseClues(String(s)).at(0)||[]; syncTextareas(); renderHints(); }
+function editCol(x){ const cur=colClues[x].length?colClues[x].join(' '):'0'; const s=prompt(`列${x+1} のヒント（空白/カンマ・0=なし）`,cur); if(s==null) return; colClues[x]=parseClues(String(s)).at(0)||[]; syncTextareas(); renderHints(); }
+function quickClearRow(y){ rowClues[y]=[]; syncTextareas(); renderHints(); }
+function quickClearCol(x){ colClues[x]=[]; syncTextareas(); renderHints(); }
+
+/* ===== 解法（推論→DFS） ===== */
+const lineCache=new Map();
+const keyLine=(len,cl,mask)=>`${len}|${cl.join(',')}|${mask.join('')}`;
+function enumLine(len, clues, mask){
+  const k=keyLine(len,clues,mask); if(lineCache.has(k)) return lineCache.get(k);
+  const res=[];
+  (function place(i,pos,a){
+    if(i===clues.length){
+      for(let k=pos;k<len;k++) a[k]=E;
+      for(let t=0;t<len;t++){ if(mask[t]!==U && mask[t]!==a[t]) return; }
+      res.push(a.slice()); return;
+    }
+    const blk=clues[i];
+    for(let st=pos; st+blk<=len; st++){
+      for(let k=pos;k<st;k++) a[k]=E;
+      let ok=true;
+      for(let k=0;k<blk;k++){ const idx=st+k; a[idx]=F; if(mask[idx]!==U && mask[idx]!==F){ ok=false; break; } }
+      if(!ok){ for(let k=pos;k<st+blk;k++) a[k]=U; continue; }
+      const next=st+blk+1;
+      if(i===clues.length-1){ place(i+1, st+blk, a); }
+      else if(st+blk<len){
+        const sep=st+blk; a[sep]=E;
+        if(mask[sep]!==U && mask[sep]!==E){ for(let k=pos;k<=sep;k++) a[k]=U; continue; }
+        place(i+1, next, a);
+      }
+      for(let k=pos;k<len;k++) if(a[k]!==E) a[k]=U;
+    }
+  })(0,0,new Array(len).fill(U));
+  lineCache.set(k,res); return res;
+}
+function intersect(cands){ if(!cands.length) return null; const n=cands[0].length, out=new Array(n).fill(U);
+  for(let i=0;i<n;i++){ let allF=true, allE=true; for(const c of cands){ if(c[i]!==F) allF=false; if(c[i]!==E) allE=false; } out[i]=allF?F:allE?E:U; } return out; }
+function getRow(y){ return board[y].slice(); }
+function setRow(y,a){ for(let x=0;x<W;x++){ if(board[y][x]!==a[x]){ board[y][x]=a[x]; updateCell(y,x); } } }
+function getCol(x){ return board.map(r=>r[x]); }
+function setCol(x,a){ for(let y=0;y<H;y++){ if(board[y][x]!==a[y]){ board[y][x]=a[y]; updateCell(y,x); } } }
+function propagateOnce(){
+  let changed=false;
+  for(let y=0;y<H;y++){
+    const inter=intersect(enumLine(W,rowClues[y],getRow(y))); if(!inter) return {ok:false,changed};
+    for(let x=0;x<W;x++) if(inter[x]!==U && board[y][x]===U){ board[y][x]=inter[x]; updateCell(y,x); changed=true; }
+  }
+  for(let x=0;x<W;x++){
+    const inter=intersect(enumLine(H,colClues[x],getCol(x))); if(!inter) return {ok:false,changed};
+    for(let y=0;y<H;y++) if(inter[y]!==U && board[y][x]===U){ board[y][x]=inter[y]; updateCell(y,x); changed=true; }
+  }
+  return {ok:true,changed};
+}
+function propagateAll(){ while(true){ const r=propagateOnce(); if(!r.ok) return false; if(!r.changed) return true; } }
+function done(){ for(const r of board) for(const v of r) if(v===U) return false; return true; }
+function consistent(){
+  for(let y=0;y<H;y++){ if(enumLine(W,rowClues[y],getRow(y)).length===0) return false; }
+  for(let x=0;x<W;x++){ if(enumLine(H,colClues[x],getCol(x)).length===0) return false; }
+  return true;
+}
+function chooseLine(){
+  let best=null;
+  for(let y=0;y<H;y++) if(getRow(y).some(v=>v===U)){
+    const c=enumLine(W,rowClues[y],getRow(y)); if(c.length===0) return null;
+    if(!best||c.length<best.count) best={type:'row',idx:y,count:c.length,cands:c};
+  }
+  for(let x=0;x<W;x++) if(getCol(x).some(v=>v===U)){
+    const c=enumLine(H,colClues[x],getCol(x)); if(c.length===0) return null;
+    if(!best||c.length<best.count) best={type:'col',idx:x,count:c.length,cands:c};
+  }
+  return best;
+}
+function solveDFS(){
+  if(!propagateAll()) return false;
+  if(done()) return true;
+  const ch=chooseLine(); if(!ch) return false;
+  const backup=board.map(r=>r.slice());
+  const {type,idx,cands}=ch;
+  for(const cand of cands){
+    if(type==='row') setRow(idx,cand); else setCol(idx,cand);
+    if(!consistent()){ for(let y=0;y<H;y++) for(let x=0;x<W;x++) board[y][x]=backup[y][x]; continue; }
+    if(solveDFS()) return true;
+    for(let y=0;y<H;y++) for(let x=0;x<W;x++) board[y][x]=backup[y][x];
+    renderGrid();
+  }
+  return false;
+}
+
+/* ===== 入出力・イベント ===== */
+function readInputs(){
+  lineCache.clear?.();
+  rowClues=parseClues(rowsTA.value);
+  colClues=parseClues(colsTA.value);
+  if(!rowClues.length||!colClues.length) throw new Error('行・列ヒントを入力してください');
+  if(rowClues.length>40||colClues.length>40) throw new Error('サイズは最大 40×40 まで');
+  initBoard(rowClues.length,colClues.length);
+}
+function validate(){
+  for(let y=0;y<H;y++){ const s=rowClues[y].reduce((a,b)=>a+b,0); if(s+Math.max(0,rowClues[y].length-1) > W) throw new Error(`行${y+1} のヒントが長すぎます`); }
+  for(let x=0;x<W;x++){ const s=colClues[x].reduce((a,b)=>a+b,0); if(s+Math.max(0,colClues[x].length-1) > H) throw new Error(`列${x+1} のヒントが長すぎます`); }
+}
+
+solveBtn.addEventListener('click',()=>{ try{ readInputs(); validate(); const ok=solveDFS(); setStatus(ok?'解けました ✅':'解が見つかりませんでした ❌'); } catch(e){ setStatus('エラー: '+e.message); }});
+
+// --- 盤面だけを未定に戻す（ヒントは保持） ---
+function clearBoard() {
+  // ヒントが未読ならテキストエリアから一度だけ読む
+  if (rowClues.length === 0 || colClues.length === 0) {
+    const rows = parseClues(rowsTA.value);
+    const cols = parseClues(colsTA.value);
+    if (rows.length && cols.length) {
+      rowClues = rows; colClues = cols;
+      H = rows.length; W = cols.length;
+      // ヒント表示を整えておく
+      syncTextareas();
+      renderHints();
+    } else {
+      setStatus('ヒント未設定です。サイズ反映 or ヒント入力後に実行してください。');
+      return;
+    }
+  }
+
+  // ドラッグ状態やキャッシュをリセット
+  dragging = false;
+  lineCache.clear?.();
+
+  // 盤面を未定で初期化してグリッドだけ再描画
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) board[y][x] = U;
+  renderGrid();
+  setStatus('盤面をクリアしました（ヒントは保持）。');
+}
+
+// ← これで登録（既存の reset のリスナーは削除してOK）
+resetBtn.addEventListener('click', clearBoard);
+
+cellSizeInput.addEventListener('input',()=>{ const v=Number(cellSizeInput.value); document.documentElement.style.setProperty('--cell', v+'px'); cellSizeVal.textContent=String(v); renderAll(); });
+
+applySizeBtn.addEventListener('click',()=>{
+  const r=Math.max(1,Math.min(40,Number(rowsN.value)||0));
+  const c=Math.max(1,Math.min(40,Number(colsN.value)||0));
+  rowsN.value=r; colsN.value=c;
+  rowClues=Array.from({length:r},()=>[]); colClues=Array.from({length:c},()=>[]);
+  syncTextareas(); initBoard(r,c);
+  setStatus(`${r}×${c} の空ヒントを作成。表またはテキストでヒントを入力して［解く］`);
+});
+
+/* 初期表示 */
+(function init(){
+  // 5×5：行も列も「0 / 1 1 / 1 / 1 1 / 0」
+  rowsTA.value = '0\n1 1\n1\n1 1\n0';
+  colsTA.value = '0\n1 1\n1\n1 1\n0';
+
+  rowClues = parseClues(rowsTA.value);
+  colClues = parseClues(colsTA.value);
+
+  initBoard(rowClues.length, colClues.length); // 5×5で盤面生成
+  setStatus('初期ヒントを読み込みました。［解く］で開始できます。');
+})();
+
+// --- 右矢印サンプル（15x15｜解あり） ---
+(function attachArrowSample(){
+  const btn = document.querySelector('#sampleArrow');
+  if (!btn) return;
+
+  function loadSampleArrow(){
+    // 行ヒント（上から順）：[] は 0（なし）
+    const rows = [
+      [], [], [1], [2], [3], [12], [13], [12], [3], [2], [1], [], [], [], []
+    ];
+    // 列ヒント（左から順）
+    const cols = [
+      [], [], [3], [3], [3], [3], [3], [3], [3], [3], [9], [7], [5], [3], [1]
+    ];
+
+    rowClues = rows;
+    colClues = cols;
+
+    // テキスト欄に反映（[] は '0' として出力）
+    syncTextareas();
+
+    // 盤面サイズを15x15に初期化して再描画
+    initBoard(rows.length, cols.length);  // boardを未定で作成＋renderAll()
+    renderHints();                        // 念のため再描画（枠サイズを合わせる）
+    setStatus('右矢印サンプルを読み込みました。［解く］を押してください。');
+  }
+
+  // クリックで読み込み
+  btn.addEventListener('click', loadSampleArrow);
+})();
+
+
+</script>
+</body>
+</html>

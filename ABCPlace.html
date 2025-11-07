@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>ABCプレース解法ツール（～8×8／A〜F／空欄OK）</title>
+<style>
+  body { font-family: sans-serif; text-align: center; margin: 20px; }
+  table { border-collapse: collapse; margin: 10px auto; }
+  td { border: 1px solid #555; width: 40px; height: 40px; text-align: center; font-size: 20px; }
+  input { width: 40px; height: 30px; text-align: center; font-size: 18px; }
+  .hint { font-weight: bold; background: #f0f0f0; }
+</style>
+</head>
+<body>
+<h1>ABCプレース解法ツール</h1>
+
+盤面サイズ:
+<select id="sizeSelect" onchange="createBoard()">
+  <option value="2">2×2</option>
+  <option value="3">3×3</option>
+  <option value="4" selected>4×4</option>
+  <option value="5">5×5</option>
+  <option value="6">6×6</option>
+  <option value="7">7×7</option>
+  <option value="8">8×8</option>
+</select>
+
+使用文字数 (A〜F):
+<select id="lettersSelect" onchange="createBoard()">
+  <option value="1">A</option>
+  <option value="2">A,B</option>
+  <option value="3" selected>A,B,C</option>
+  <option value="4">A〜D</option>
+  <option value="5">A〜E</option>
+  <option value="6">A〜F</option>
+</select>
+
+<div id="boardContainer"></div>
+<button onclick="solve()">解く</button>
+
+<h3>結果</h3>
+<div id="result"></div>
+
+<script>
+let boardSize = 4;
+let letters = ['A','B','C'];
+
+// UI生成
+function createBoard(){
+  boardSize = parseInt(document.getElementById('sizeSelect').value);
+  const n = parseInt(document.getElementById('lettersSelect').value);
+  letters = ['A','B','C','D','E','F'].slice(0,n);
+
+  let html = '<table>';
+  html += '<tr><td></td>';
+  for(let c=0;c<boardSize;c++)
+    html+=`<td class="hint"><input id="top${c}" maxlength="1"></td>`;
+  html+='</tr>';
+
+  for(let r=0;r<boardSize;r++){
+    html+='<tr>';
+    html+=`<td class="hint"><input id="left${r}" maxlength="1"></td>`;
+    for(let c=0;c<boardSize;c++)
+      html+=`<td><input id="cell${r}_${c}" maxlength="1"></td>`;
+    html+=`<td class="hint"><input id="right${r}" maxlength="1"></td>`;
+    html+='</tr>';
+  }
+
+  html+='<tr><td></td>';
+  for(let c=0;c<boardSize;c++)
+    html+=`<td class="hint"><input id="bottom${c}" maxlength="1"></td>`;
+  html+='</tr></table>';
+
+  document.getElementById('boardContainer').innerHTML = html;
+}
+createBoard();
+
+// 行候補生成（空欄OK＆使用文字ちょうど1回ずつ）
+function generateRowPatterns(letters, size){
+  let results=[];
+  function combinations(arr,k){
+    if(k===0) return [[]];
+    if(arr.length<k) return [];
+    let [h,...t]=arr;
+    let withH = combinations(t,k-1).map(x=>[h,...x]);
+    let withoutH = combinations(t,k);
+    return withH.concat(withoutH);
+  }
+  const pos = [...Array(size).keys()];
+  const combos = combinations(pos, letters.length);
+
+  function perm(arr){
+    if(arr.length<=1) return [arr];
+    let r=[];
+    for(let i=0;i<arr.length;i++)
+      for(let t of perm(arr.slice(0,i).concat(arr.slice(i+1))))
+        r.push([arr[i]].concat(t));
+    return r;
+  }
+
+  for(let cs of combos){
+    for(let p of perm(letters)){
+      let row = Array(size).fill('');
+      for(let i=0;i<letters.length;i++)
+        row[cs[i]] = p[i];
+      results.push(row);
+    }
+  }
+  return results;
+}
+
+function checkHints(bd,h){
+  for(let c=0;c<boardSize;c++){
+    if(h.top[c]){
+      let v = bd.find(r=>r[c]!=='' )?.[c];
+      if(v!==h.top[c]) return false;
+    }
+    if(h.bottom[c]){
+      let v = [...bd].reverse().find(r=>r[c]!=='' )?.[c];
+      if(v!==h.bottom[c]) return false;
+    }
+  }
+  for(let r=0;r<boardSize;r++){
+    if(h.left[r]){
+      let v = bd[r].find(v=>v!=='');
+      if(v!==h.left[r]) return false;
+    }
+    if(h.right[r]){
+      let v = [...bd[r]].reverse().find(v=>v!=='');
+      if(v!==h.right[r]) return false;
+    }
+  }
+  return true;
+}
+
+// 解法
+function solve(){
+  let fixed = Array.from({length:boardSize},()=>Array(boardSize).fill(''));
+  for(let r=0;r<boardSize;r++)
+    for(let c=0;c<boardSize;c++){
+      let v=document.getElementById(`cell${r}_${c}`).value.toUpperCase();
+      if(letters.includes(v)) fixed[r][c]=v;
+    }
+
+  let h={top:[],bottom:[],left:[],right:[]};
+  for(let i=0;i<boardSize;i++){
+    h.top[i]=document.getElementById(`top${i}`).value.toUpperCase();
+    h.bottom[i]=document.getElementById(`bottom${i}`).value.toUpperCase();
+    h.left[i]=document.getElementById(`left${i}`).value.toUpperCase();
+    h.right[i]=document.getElementById(`right${i}`).value.toUpperCase();
+  }
+
+  const allRows = generateRowPatterns(letters, boardSize);
+
+  const rowCand=[];
+  for(let r=0;r<boardSize;r++){
+    rowCand[r] = allRows.filter(row=>{
+      if(h.left[r] && row.find(v=>v!=='')!==h.left[r]) return false;
+      if(h.right[r] && [...row].reverse().find(v=>v!=='')!==h.right[r]) return false;
+      for(let c=0;c<boardSize;c++)
+        if(fixed[r][c] && row[c]!==fixed[r][c]) return false;
+      return true;
+    });
+  }
+
+  let solved=null;
+  function dfs(r,bd,used){
+    if(solved) return;
+    if(r===boardSize){
+      if(checkHints(bd,h)) solved = bd.map(x=>x.slice());
+      return;
+    }
+
+    for(let row of rowCand[r]){
+      let ok = true;
+      for(let c=0;c<boardSize;c++)
+        if(row[c]!=='' && used[c].has(row[c])){ ok=false; break; }
+      if(!ok) continue;
+
+      for(let c=0;c<boardSize;c++)
+        if(row[c]!=='') used[c].add(row[c]);
+      bd[r]=row.slice();
+      dfs(r+1,bd,used);
+      for(let c=0;c<boardSize;c++)
+        if(row[c]!=='') used[c].delete(row[c]);
+      if(solved) return;
+    }
+  }
+
+  dfs(0,Array.from({length:boardSize},()=>Array(boardSize).fill('')),
+      Array.from({length:boardSize},()=>new Set()));
+
+  const out=document.getElementById('result');
+  if(!solved) out.innerHTML='<b>解なし</b>';
+  else{
+    let html='<table>';
+    for(let r=0;r<boardSize;r++){
+      html+='<tr>';
+      for(let c=0;c<boardSize;c++) html+=`<td>${solved[r][c]}</td>`;
+      html+='</tr>';
+    }
+    html+='</table>';
+    out.innerHTML=html;
+  }
+}
+</script>
+</body>
+</html>

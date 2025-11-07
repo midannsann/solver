@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <title>スライディングパズル（15パズル） - 可解性チェック無効版</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif; text-align:center; background:#f6f8fa; color:#111; padding:20px; }
+    h1 { margin:10px 0 16px; font-size:20px; }
+    #board { display:grid; grid-template-columns:repeat(4,72px); gap:8px; justify-content:center; margin:12px auto; }
+    .cell {
+      width:72px; height:72px; line-height:72px; font-size:20px; border-radius:8px;
+      background:#fff; box-shadow:0 1px 2px rgba(0,0,0,0.08); cursor:pointer; user-select:none;
+      border:1px solid #e1e4e8;
+    }
+    .cell.empty { background:#e9ecef; color:transparent; cursor:default; }
+    .controls { margin-top:18px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+    button { padding:10px 14px; font-size:15px; border-radius:8px; border:1px solid #cbd5e1; background:#fff; cursor:pointer; }
+    button:active { transform:translateY(1px); }
+    #message { margin-top:14px; font-weight:600; min-height:1.4em; }
+    #solution { margin-top:10px; white-space:pre-wrap; text-align:left; max-width:640px; margin-left:auto;margin-right:auto; background:#fff; padding:10px; border-radius:8px; border:1px solid #e6eef6; box-shadow:0 1px 2px rgba(0,0,0,0.03); font-family:monospace; font-size:14px; }
+    .small { font-size:13px; color:#555; margin-top:6px; }
+  </style>
+</head>
+<body>
+  <h1>🎯 スライディングパズル（15パズル）</h1>
+
+  <div id="board" aria-label="4x4 board"></div>
+
+  <div class="controls">
+    <button id="solveBtn">解く</button>
+    <button id="clearBtn">盤面クリア</button>
+  </div>
+
+  <div id="message"></div>
+  <div id="solution"></div>
+  <div class="small">操作：最初はクリックで1→2→...15を入力。入力完了後は空白と隣接する数字をクリックしてスライドできます。可解性の自動判定を行わず、常に解法探索を試みます。</div>
+
+  <script>
+    const boardEl = document.getElementById('board');
+    const messageEl = document.getElementById('message');
+    const solutionEl = document.getElementById('solution');
+    const solveBtn = document.getElementById('solveBtn');
+    const clearBtn = document.getElementById('clearBtn');
+
+    let tiles = Array(16).fill(null); // null = empty
+    let inputCounter = 1;
+    let inputMode = true;
+
+    function render() {
+      boardEl.innerHTML = '';
+      tiles.forEach((v, idx) => {
+        const d = document.createElement('div');
+        d.className = 'cell' + (v === null ? ' empty' : '');
+        d.textContent = v === null ? '' : v;
+        d.dataset.idx = idx;
+        d.addEventListener('click', () => onCellClick(idx));
+        boardEl.appendChild(d);
+      });
+      checkClear();
+    }
+
+    function onCellClick(index) {
+      if (inputMode) {
+        if (tiles[index] === null && inputCounter <= 15) {
+          tiles[index] = inputCounter++;
+          if (inputCounter > 15) inputMode = false;
+          messageEl.textContent = '';
+          solutionEl.textContent = '';
+          render();
+        }
+        return;
+      }
+
+      const emptyIndex = tiles.indexOf(null);
+      const neighbors = getNeighbors(index);
+      if (neighbors.includes(emptyIndex)) {
+        [tiles[emptyIndex], tiles[index]] = [tiles[index], tiles[emptyIndex]];
+        render();
+      }
+    }
+
+    function getNeighbors(index) {
+      const r = Math.floor(index / 4);
+      const c = index % 4;
+      const res = [];
+      if (r > 0) res.push(index - 4);
+      if (r < 3) res.push(index + 4);
+      if (c > 0) res.push(index - 1);
+      if (c < 3) res.push(index + 1);
+      return res;
+    }
+
+    function checkClear() {
+      const goal = [...Array(15).keys()].map(n => n + 1).concat(null);
+      if (tiles.every((v, i) => v === goal[i])) {
+        messageEl.textContent = '🎉 クリア！';
+      } else {
+        messageEl.textContent = '';
+      }
+    }
+
+    // ヒューリスティック（マンハッタン距離）
+    const goalState = [...Array(15).keys()].map(n => n + 1).concat(null);
+    const goalPos = new Map();
+    goalState.forEach((v, i) => { if (v !== null) goalPos.set(v, i); });
+
+    function manhattan(state) {
+      let sum = 0;
+      for (let i = 0; i < 16; i++) {
+        const v = state[i];
+        if (v === null) continue;
+        const goalIndex = goalPos.get(v);
+        const r1 = Math.floor(i / 4), c1 = i % 4;
+        const r2 = Math.floor(goalIndex / 4), c2 = goalIndex % 4;
+        sum += Math.abs(r1 - r2) + Math.abs(c1 - c2);
+      }
+      return sum;
+    }
+
+    function oppositeMove(m) {
+      if (m === 'U') return 'D';
+      if (m === 'D') return 'U';
+      if (m === 'L') return 'R';
+      if (m === 'R') return 'L';
+      return null;
+    }
+
+    function provisionalHeuristic(state, emptyIdx, tilePos) {
+      const temp = state.slice();
+      [temp[emptyIdx], temp[tilePos]] = [temp[tilePos], temp[emptyIdx]];
+      return manhattan(temp);
+    }
+
+    // IDA*（探索深さリミットをやや広めに設定）
+    function idaStar(startState, maxDepthLimit = 100) {
+      const startH = manhattan(startState);
+      if (startH === 0) return [];
+      let bound = startH;
+      const path = [];
+      const visited = new Set();
+
+      function dfs(state, emptyIdx, g, prevMove) {
+        const f = g + manhattan(state);
+        if (f > bound) return f;
+        if (manhattan(state) === 0) return 'FOUND';
+        let min = Infinity;
+
+        const zeroR = Math.floor(emptyIdx / 4), zeroC = emptyIdx % 4;
+        const possible = [];
+        if (zeroR > 0) possible.push({ pos: emptyIdx - 4, mv: 'D' });
+        if (zeroR < 3) possible.push({ pos: emptyIdx + 4, mv: 'U' });
+        if (zeroC > 0) possible.push({ pos: emptyIdx - 1, mv: 'R' });
+        if (zeroC < 3) possible.push({ pos: emptyIdx + 1, mv: 'L' });
+
+        possible.sort((a, b) => provisionalHeuristic(state, emptyIdx, a.pos) - provisionalHeuristic(state, emptyIdx, b.pos));
+
+        for (const p of possible) {
+          const mvName = p.mv;
+          if (prevMove && mvName === oppositeMove(prevMove)) continue;
+          const newState = state.slice();
+          [newState[emptyIdx], newState[p.pos]] = [newState[p.pos], newState[emptyIdx]];
+          const key = newState.join(',');
+          if (visited.has(key)) continue;
+          visited.add(key);
+          path.push(newState[emptyIdx]);
+          const t = dfs(newState, p.pos, g + 1, mvName);
+          if (t === 'FOUND') return 'FOUND';
+          if (typeof t === 'number' && t < min) min = t;
+          path.pop();
+          visited.delete(key);
+        }
+        return min;
+      }
+
+      const startKey = startState.join(',');
+      visited.add(startKey);
+
+      while (bound <= maxDepthLimit) {
+        const t = dfs(startState, startState.indexOf(null), 0, null);
+        if (t === 'FOUND') return path.slice();
+        if (t === Infinity) break;
+        if (typeof t === 'number') bound = t;
+        else break;
+      }
+      return null;
+    }
+
+    solveBtn.addEventListener('click', () => {
+      solutionEl.textContent = '';
+      if (inputMode) {
+        messageEl.textContent = '⚠ 入力が完了していません';
+        return;
+      }
+      messageEl.textContent = '🔎 解法探索中...（可解性チェックを行いません）';
+      setTimeout(() => {
+        const start = tiles.slice();
+        const moves = idaStar(start, 100);
+        if (moves === null) {
+          messageEl.textContent = '⚠ 解法が見つかりませんでした（探索深さ上限）';
+          solutionEl.textContent = '';
+        } else {
+          messageEl.textContent = '✅ 解法が見つかりました（動かす数字の順）';
+          solutionEl.textContent = moves.join(' -> ');
+        }
+      }, 30);
+    });
+
+    clearBtn.addEventListener('click', () => {
+      tiles = Array(16).fill(null);
+      inputCounter = 1;
+      inputMode = true;
+      messageEl.textContent = '';
+      solutionEl.textContent = '';
+      render();
+    });
+
+    render();
+
+    // 以下コメントを外すと、ユーザーが指定した盤面で動作確認できます
+    /*
+    tiles = [
+      1,2,3,4,
+      5,6,7,8,
+      9,10,11,12,
+      13,14,null,15
+    ];
+    inputMode = false;
+    inputCounter = 16;
+    render();
+    */
+  </script>
+</body>
+</html>
