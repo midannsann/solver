@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ABCプレースの解き方・攻略ガイド</title>
+<style>
+body {
+  font-family: sans-serif;
+  max-width: 800px;
+  margin: 40px auto;
+  padding: 0 20px;
+  line-height: 1.8;
+}
+h1, h2, h3 {
+  margin-top: 32px;
+}
+table {
+  border-collapse: collapse;
+  margin: 20px 0;
+}
+td, th {
+  border: 1px solid #aaa;
+  padding: 6px 10px;
+  text-align: center;
+}
+</style>
+</head>
+<body>
+
+<h1>ABCプレースの解き方・攻略ガイド</h1>
+
+<p>
+ABCプレースは、外枠に書かれたヒントを手がかりに、盤面へ A / B / C … の文字を
+<strong>重複なしで配置していく論理パズル</strong>です。
+ナンプレに近い要素を持ちながら、外側からの視点制約が加わることで
+<strong>推理の深さが増す</strong>ことが特徴です。
+</p>
+
+<hr>
+
+<h2>基本ルール</h2>
+
+<ol>
+<li>各行・各列には、同じ文字を<strong>1回だけ</strong>使う</li>
+<li>盤面の外側にあるヒント文字は、<strong>その方向から見て最初に現れる文字</strong></li>
+</ol>
+
+<hr>
+
+<h2>外側ヒントから分かること</h2>
+
+<p>
+外枠ヒントは「その方向から見て最初に見える文字」なので、
+ヒント文字と盤面の対応位置は次のように考えられます。
+</p>
+
+<table>
+<tr><th>外枠ヒント</th><th>意味</th></tr>
+<tr><td>A → →</td><td>その行の最初に A が来る</td></tr>
+<tr><td>↓ B</td><td>その列の上側から見て最初に B が来る</td></tr>
+</table>
+
+<p>
+特に重要なのは
+<strong>「同じ文字は行と列で1回しか使えない」</strong> ことです。
+</p>
+
+<hr>
+
+<h2>攻略の基本戦略</h2>
+
+<h3>① 外枠ヒントの方向から「候補を絞る」</h3>
+<p>
+例えば、上側から「A」と書かれていたなら、
+その列の最上段は <strong>A 以外は置けない</strong> ことが多いです。
+</p>
+
+<h3>② すでに置いた文字と同じ行・列から候補を削除</h3>
+<p>
+ナンプレ同様、この削除作業だけでも多くのマスが埋まります。
+</p>
+
+<h3>③ 「確定 → 削除 → 確定」の繰り返し</h3>
+<p>
+ABCプレースは推理型パズルなので、
+<strong>行・列 / ヒント / 確定 / 候補削除</strong> のループが基本です。
+</p>
+
+<hr>
+
+<h2>例題（考え方の流れ）</h2>
+
+<p>例として、4×4 の盤面を考えます：</p>
+
+<table>
+<tr><td></td><td>A</td><td></td><td></td><td>B</td></tr>
+<tr><td>C</td><td>？</td><td>？</td><td>？</td><td>？</td></tr>
+<tr><td></td><td>？</td><td>？</td><td>？</td><td>？</td></tr>
+<tr><td></td><td>？</td><td>？</td><td>？</td><td>？</td></tr>
+<tr><td>D</td><td>？</td><td>？</td><td>？</td><td>？</td></tr>
+</table>
+
+<p>
+上から見て A が最初に来るなら、
+<strong>その列の最上段は A 以外の文字が入れない</strong>。
+</p>
+
+<p>また、左から C が来るなら、最左マスは C か非常に強い。</p>
+
+<p>
+このように、
+<strong>外枠ヒント → 候補削除 → 確定</strong>
+を繰り返します。
+</p>
+
+<hr>
+
+<h2>応用：強いパターン認識</h2>
+
+<ul>
+<li>ヒント文字がある方向の「最寄りマス」は候補が絞られやすい</li>
+<li>反対側から同じ文字は来ない（重複禁止）</li>
+<li>一度確定したら、同じ行・列の候補を即削除</li>
+</ul>
+
+<p>
+これを意識すると、<strong>難問ほど一気に解ける</strong>ようになります。
+</p>
+
+<hr>
+
+<h2>実際に試してみる</h2>
+
+<p>
+下のリンクから、実際の問題生成・解法表示付きの
+ABCプレースを体験できます。
+</p>
+
+<p><a href="ABCPlace.html">→ ABCプレースをプレイする</a></p>
+
+</body>
+</html>
