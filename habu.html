@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>サイトハブ（リンク集）</title>
+  <style>
+ body {
+  font-family: sans-serif;
+  margin: 20px;
+  background: #f5f5f5;
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 30px;
+}
+h2 {
+max-width: 980px;
+margin: 0 auto 10px auto;
+padding: 8px 0;
+padding-left: 4px;
+}
+
+/* ★ パズル系・カード系のレイアウトを完全に揃える */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* PCで3列固定 */
+  gap: 20px;
+  width: 100%;
+  max-width: 980px;
+  margin: 0 auto;
+  align-items: start;
+}
+
+/* スマホ対応 */
+@media (max-width: 800px) {
+  .cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 520px) {
+  .cards {
+    grid-template-columns: repeat(1, 1fr);
+  }
+}
+
+/* カード本体 */
+.card {
+  background: white;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  transition: 0.2s;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 150px;
+  cursor: pointer;
+}
+
+.card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
+
+.card a {
+  text-decoration: none;
+  color: #333;
+  font-weight: bold;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.card p {
+  margin: 0;
+  color: #666;
+  font-size: 14px;
+}
+  </style>
+</head>
+<body>
+
+<h1>ゲーム解法機構</h1>
+
+<h2>パズル系</h2>
+<div class="cards">
+
+  <div class="card">
+    <a href="ABCPlace.html">ABCプレース / ABCPlace</a>
+    <p>ナンプレの親戚的なゲーム</p>
+  </div>
+
+  <div class="card">
+    <a href="Nonogram.html">イラストロジック / Nonogram</a>
+    <p>お絵かきロジックなどの呼び方もある</p>
+  </div>
+
+  <div class="card">
+    <a href="hakoiri.html">箱入り娘 / Klotski</a>
+    <p>スライドパズルの一種。海外では Klotski と呼ばれている</p>
+  </div>
+
+  <div class="card">
+    <a href="hitohude.html">一筆書きパズル / One Stroke Puzzle</a>
+    <p>数学的には「オイラー路問題」と呼ばれるらしい</p>
+  </div>
+
+</div>
+
+
+<h2>カード系</h2>
+<div class="cards">
+
+  <div class="card">
+    <a href="七並べ.html">七並べ / Sevens (Card game)</a>
+    <p>七並べ。トンネルなどのルールは未対応</p>
+  </div>
+
+</div>
+
+    
+    
+    
+ <script>
+  document.querySelectorAll('.card').forEach(card => {
+    card.addEventListener('click', () => {
+      const link = card.querySelector('a');
+      if (link) link.click();
+    });
+  });
+</script>
+
+<hr>
+<footer style="text-align:center; margin-top:40px; color:#666; font-size:14px;">
+  <a href="privacy.html">プライバシーポリシー</a> |
+  <a href="contact.html">お問い合わせ</a>
+</footer>
+
+</body>
+
+</html>
