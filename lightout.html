@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<title>Lights Out 3〜7×7 対応・マーク保持版</title>
+<style>
+:root {
+  --size: 5;
+  --cell: 60px;
+  --gap: 6px;
+  --on: #ffd54f;
+  --off: #263238;
+  --press: #82b1ff;
+}
+body {
+  background: #0f172a;
+  color: #e2e8f0;
+  font-family: system-ui, sans-serif;
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+header {
+  width: 100%;
+  text-align: center;
+  padding: 16px 0;
+  background: rgba(0,0,0,0.2);
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(var(--size), var(--cell));
+  gap: var(--gap);
+  margin: 16px auto;
+}
+.cell {
+  width: var(--cell); height: var(--cell);
+  border-radius: 8px; cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+}
+.cell.on { background: var(--on); }
+.cell.off { background: var(--off); }
+.cell.mark::after {
+  content: "•"; color: var(--press);
+  font-size: 24px; display: grid; place-items: center;
+  height: 100%;
+}
+button, select {
+  margin: 4px; padding: 8px 14px;
+  border-radius: 8px; border: none; cursor: pointer;
+  background: #334155; color: white; font-weight: 600;
+}
+button.primary { background: #3b82f6; }
+.status { margin-top: 8px; font-size: 14px; color: #93c5fd; }
+footer {
+  margin: 10px 0;
+  font-size: 12px;
+  opacity: 0.6;
+}
+.playbtn{
+    background:#3b82f6; color:#fff; font-weight:700; border:none; border-radius:12px;
+    padding:10px 16px; cursor:pointer; box-shadow:var(--shadow);
+  }
+.back-button {
+  display: inline-block;
+  padding: 12px 24px;
+  background: #ffffff;
+  border: 2px solid #333;
+  border-radius: 12px;
+  text-decoration: none;
+  color: #333;
+  font-size: 16px;
+  font-weight: bold;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  transition: 0.2s;
+}
+.back-button:hover {
+  background: #f0f0f0;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+}
+</style>
+</head>
+<body>
+<header>Lights Out — サイズ可変（3〜7×7）・マーク保持版
+<a href="habu.html" class="back-button">攻略ハブに戻る</a>
+</header>
+
+<main class="app">
+  <div>
+    <button id="editMode" class="primary">🟢 編集モード ON（1マス反転）</button>
+    <button id="solve">自動解法</button>
+    <button id="step">次の一手</button>
+    <button id="clear">全OFF</button>
+    <button id="random">ランダム</button>
+    <select id="sizeSel">
+      <option value="3">3×3</option>
+      <option value="4">4×4</option>
+      <option value="5" selected>5×5</option>
+      <option value="6">6×6</option>
+      <option value="7">7×7</option>
+    </select>
+  </div>
+  <div id="grid" class="grid"></div>
+  <div id="status" class="status"></div>
+</main>
+
+
+<script>
+(() => {
+  let N = 5;
+  let board = Array(N*N).fill(0);
+  let currentPlan = null;
+  let running = false;
+  let editMode = true;
+
+  const gridEl = document.getElementById("grid");
+  const statusEl = document.getElementById("status");
+  const btnSolve = document.getElementById("solve");
+  const btnStep = document.getElementById("step");
+  const btnClear = document.getElementById("clear");
+  const btnRandom = document.getElementById("random");
+  const btnEdit = document.getElementById("editMode");
+  const selSize = document.getElementById("sizeSel");
+
+  function neighbors(i){
+    const r=Math.floor(i/N),c=i%N,arr=[i];
+    if(r>0)arr.push(i-N);if(r<N-1)arr.push(i+N);
+    if(c>0)arr.push(i-1);if(c<N-1)arr.push(i+1);
+    return arr;
+  }
+  function toggle(i,single=false){
+    if(single){board[i]^=1;return;}
+    neighbors(i).forEach(j=>board[j]^=1);
+  }
+
+  function render(markPlan=currentPlan){
+    gridEl.innerHTML="";
+    gridEl.style.setProperty("--size",N);
+    const base=60;
+    const cellSize=Math.max(28, base-(N-3)*6);
+    gridEl.style.setProperty("--cell", cellSize+"px");
+    for(let i=0;i<N*N;i++){
+      const d=document.createElement("div");
+      d.className="cell "+(board[i]?"on":"off");
+      if(markPlan&&markPlan[i])d.classList.add("mark");
+      d.addEventListener("click",()=>{
+        if(running)return;
+        toggle(i,editMode);
+        render(currentPlan);
+      });
+      gridEl.appendChild(d);
+    }
+  }
+
+  function buildA(){
+    const n2=N*N;
+    const A=Array.from({length:n2},()=>Array(n2).fill(0));
+    for(let i=0;i<n2;i++)neighbors(i).forEach(j=>A[i][j]=1);
+    return A;
+  }
+  function solveMod2(A,b){
+    const n=A.length;
+    const M=A.map((r,i)=>r.concat([b[i]&1]));
+    let r=0,c=0,piv=new Array(n).fill(-1);
+    while(r<n&&c<n){
+      let pivRow=-1;
+      for(let i=r;i<n;i++)if(M[i][c]&1){pivRow=i;break;}
+      if(pivRow===-1){c++;continue;}
+      [M[r],M[pivRow]]=[M[pivRow],M[r]];
+      piv[r]=c;
+      for(let i=0;i<n;i++){
+        if(i!==r&&M[i][c]&1){
+          for(let j=c;j<=n;j++)M[i][j]^=M[r][j];
+        }
+      }r++;c++;
+    }
+    for(let i=r;i<n;i++){
+      if(M[i].slice(0,n).every(x=>!x)&&M[i][n])return{ok:false};
+    }
+    const x=Array(n).fill(0);
+    for(let i=r-1;i>=0;i--){
+      const pc=piv[i];if(pc<0)continue;
+      let s=M[i][n];
+      for(let j=pc+1;j<n;j++)if(M[i][j])s^=x[j];
+      x[pc]=s;
+    }
+    return{ok:true,x};
+  }
+  function computePlan(){
+    const A=buildA(),b=board.slice();
+    const res=solveMod2(A,b);
+    if(!res.ok)return{ok:false,msg:"解なし"};
+    currentPlan=res.x.map(v=>v?1:0);
+    return{ok:true,count:currentPlan.reduce((a,b)=>a+b,0)};
+  }
+
+  async function runPlan(stepOnce=false){
+    const res=computePlan();
+    if(!res.ok){statusEl.textContent=res.msg;render();return;}
+    const plan=currentPlan.slice();
+    running=true;editMode=false;
+    btnEdit.textContent="🔴 編集モード OFF（上下左右反転）";
+    const queue=plan.map((v,i)=>v?i:null).filter(v=>v!==null);
+    if(queue.length===0){
+      statusEl.textContent="すでに全OFFです";
+      running=false;editMode=true;render();return;
+    }
+    const delay=ms=>new Promise(r=>setTimeout(r,ms));
+    const speed=220;
+    if(stepOnce){
+      const i=queue[0];
+      toggle(i,false);
+      render(currentPlan);
+      running=false;editMode=true;
+      statusEl.textContent="1手実行";
+      return;
+    }
+    for(let k=0;k<queue.length;k++){
+      const i=queue[k];
+      toggle(i,false);
+      render(currentPlan);
+      statusEl.textContent=`${k+1}/${queue.length}`;
+      await delay(speed);
+    }
+    running=false;editMode=true;
+    statusEl.textContent="完了！（マーク保持中）";
+    render(currentPlan);
+  }
+
+  // --- 操作 ---
+  btnSolve.onclick=()=>runPlan(false);
+  btnStep.onclick=()=>runPlan(true);
+  btnClear.onclick=()=>{
+    board.fill(0);currentPlan=null;
+    render();statusEl.textContent="全OFF（マークも消去）";
+  };
+  btnRandom.onclick=()=>{
+    for(let i=0;i<N*N;i++)board[i]=Math.random()<0.5?1:0;
+    render(currentPlan);statusEl.textContent="ランダム生成";
+  };
+  btnEdit.onclick=()=>{
+    editMode=!editMode;
+    btnEdit.textContent=editMode
+      ?"🟢 編集モード ON（1マス反転）"
+      :"🔴 編集モード OFF（上下左右反転）";
+    statusEl.textContent=editMode?"問題入力モードです":"通常モードになりました";
+  };
+  selSize.onchange=()=>{
+    N=parseInt(selSize.value);
+    board=Array(N*N).fill(0);
+    currentPlan=null;
+    render();
+    statusEl.textContent=`サイズを ${N}×${N} に変更しました`;
+  };
+
+  render();
+})();
+</script>
+    <button class="playbtn" onclick="location.href='lightout-guide.html'">▶ 解説（解説サイトへ）</button>
+</body>
+</html>

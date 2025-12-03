@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>補填ページ｜ペグソリティア：中央1マス空きの例解とアニメ</title>
+<style>
+  :root{ --cell:52px; }
+  body{ font-family:"Segoe UI",system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif; background:#f3f6fb; margin:0; padding:24px; display:flex; flex-direction:column; align-items:center; gap:18px; }
+  h1{ margin:0; font-size:22px; }
+  h2{ margin:12px 0 8px; font-size:18px; }
+  #wrap{ display:grid; grid-template-columns:1fr; gap:18px; width:min(980px,96vw); }
+  #boardWrap{ display:flex; flex-direction:column; align-items:center; gap:10px; }
+  #grid{ display:grid; grid-template-columns:repeat(8,var(--cell)); grid-template-rows:repeat(8,var(--cell)); gap:4px; user-select:none; }
+  .label{ display:flex; align-items:center; justify-content:center; color:#6b7280; font-weight:600; font-size:14px; }
+  .corner{ background:transparent; }
+  .cell{ width:var(--cell); height:var(--cell); border-radius:50%; background:#e5e7eb; display:flex; align-items:center; justify-content:center; }
+  .invalid{ visibility:hidden; }
+  .peg{ width:calc(var(--cell) - 16px); height:calc(var(--cell) - 16px); border-radius:50%; background:#2563eb; box-shadow:inset -2px -3px 6px rgba(0,0,0,.22); }
+  #toolbar{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  button{ background:#2563eb; color:#fff; border:none; padding:10px 16px; border-radius:10px; cursor:pointer; }
+  button:hover{ background:#1d4ed8; }
+  .outline{ background:#fff; color:#374151; border:1px solid #cbd5e1; }
+  .muted{ background:#6b7280; }
+  .muted:hover{ background:#4b5563; }
+  #moves{ background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:12px 14px; white-space:pre-wrap; line-height:1.6; max-height:240px; overflow:auto; font-family:ui-monospace,Menlo,monospace; }
+  section.card{ background:#fff; border:1px solid #e5e7eb; border-radius:14px; padding:14px 16px; }
+  ul{ margin:8px 0 0 18px; }
+.back-button {
+  display: inline-block;
+  padding: 12px 24px;
+  background: #ffffff;
+  border: 2px solid #333;
+  border-radius: 12px;
+  text-decoration: none;
+  color: #333;
+  font-size: 16px;
+  font-weight: bold;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  transition: 0.2s;
+}
+.back-button:hover {
+  background: #f0f0f0;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+}
+</style>
+</head>
+<body>
+  <h1>補填ページ｜中央1マス空きスタート（英型 7×7）</h1>
+<a href="habu.html" class="back-button">攻略ハブに戻る</a>
+  <div id="wrap">
+    <section id="boardWrap" class="card">
+      <h2>定型の盤面と解法アニメ再生</h2>
+      <div id="grid"></div>
+      <div id="toolbar">
+        <button id="loadBtn" class="outline">📥 例題をロード</button>
+        <button id="playBtn">▶ 再生</button>
+        <button id="pauseBtn" class="muted">⏸ 一時停止</button>
+        <button id="stepBtn" class="outline">➡ ステップ</button>
+        <button id="resetBtn" class="outline">🔁 リセット</button>
+        <span id="status"></span>
+      </div>
+      <div id="moves"></div>
+    </section>
+
+    <section class="card">
+      <h2>序盤の定石（考え方）</h2>
+      <ul>
+        <li><b>十字の回収：</b>中央に向かう4方向（上・下・左・右）から早めに中央付近の駒を処理する。</li>
+        <li><b>対称性の維持：</b>極端に片側だけを減らさず、左右（上下）のバランスを保つ。</li>
+        <li><b>孤立マスを作らない：</b>周囲から飛び越せない一匹残しは詰みの原因。</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>よくある形と注意点</h2>
+      <ul>
+        <li><b>L字の塊：</b>外側の角でL字に駒が残ると詰みやすい。外周は直線で消す意識。</li>
+        <li><b>三連直線：</b>一直線に3つ残っていると処理しやすい。中盤でこの形を目指す。</li>
+        <li><b>二分割の罠：</b>盤が二つのブロックに分断されると互いに干渉できず詰む。</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>中盤のコツ</h2>
+      <ul>
+        <li><b>外→内の流れ：</b>外周の駒を内側に寄せてからまとめて処理。</li>
+        <li><b>犠牲の一手：</b>一時的に遠ざかる手でも、後の二段跳びで回収できるなら有効。</li>
+        <li><b>終盤読み：</b>終盤の3〜7個のパターンを意識して、中盤のうちに形を作る。</li>
+      </ul>
+    </section>
+
+    <section class="card" style="font-size:12px;color:#6b7280;">
+      参考：例題の手順は Jaap's Puzzle Page に掲載の英型ボード中央空きの代表解を使用しています。
+    </section>
+  </div>
+
+<script>
+const SIZE=7,A2Z=["A","B","C","D","E","F","G"];
+const MASK=[[-1,-1,0,0,0,-1,-1],[-1,-1,0,0,0,-1,-1],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[-1,-1,0,0,0,-1,-1],[-1,-1,0,0,0,-1,-1]];
+let board=MASK.map(r=>r.map(v=>v===-1?-1:1));board[3][3]=0;let playing=false,paused=false,ptr=0;
+const grid=document.getElementById('grid'),loadBtn=document.getElementById('loadBtn'),playBtn=document.getElementById('playBtn'),pauseBtn=document.getElementById('pauseBtn'),resetBtn=document.getElementById('resetBtn'),stepBtn=document.getElementById('stepBtn'),statusEl=document.getElementById('status'),movesEl=document.getElementById('moves');
+function status(t){statusEl.textContent=t;}function movesOut(s){movesEl.textContent+=s+"\n";}function movesClear(){movesEl.textContent='';}
+function buildGrid(){grid.innerHTML='';for(let y=0;y<=SIZE;y++){for(let x=0;x<=SIZE;x++){const d=document.createElement('div');if(y===0&&x===0){d.className='label corner';grid.appendChild(d);continue;}if(y===0){d.className='label';d.textContent=A2Z[x-1];grid.appendChild(d);continue;}if(x===0){d.className='label';d.textContent=String(y);grid.appendChild(d);continue;}d.className='cell';if(MASK[y-1][x-1]===-1)d.classList.add('invalid');grid.appendChild(d);}}render();}
+function render(){let idx=0;const kids=[...grid.children];for(let y=0;y<=SIZE;y++){for(let x=0;x<=SIZE;x++){const el=kids[idx++];if(y===0||x===0)continue;if(MASK[y-1][x-1]===-1)continue;el.innerHTML='';if(board[y-1][x-1]===1){const peg=document.createElement('div');peg.className='peg';el.appendChild(peg);}}}}
+function coord2idx(c){const col=A2Z.indexOf(c[0]);const row=parseInt(c.slice(1),10)-1;return[row,col];}
+function applyMove(from,to){const[y1,x1]=from,[y2,x2]=to,ym=(y1+y2)/2,xm=(x1+x2)/2;board[y1][x1]=0;board[ym][xm]=0;board[y2][x2]=1;}
+function resetBoard(){board=MASK.map(r=>r.map(v=>v===-1?-1:1));board[3][3]=0;render();ptr=0;paused=false;playing=false;status('');}
+const SCRIPT_STR=["D6>D4","F5>D5","E7>E5","C7>E7","E4>E6","E7>E5","E2>E4","G3>E3","G5>G3","D3>F3","G3>E3","B3>D3","C1>C3","E1>C1","C4>C2","C1>C3","C6>C4","A5>C5","A3>A5","D5>B5","A5>C5","D3>B3","B3>B5","B5>D5","D5>F5","F5>F3","F3>D3","D4>F4","D2>D4","C4>E4","F4>D4"];
+const SCRIPT=SCRIPT_STR.map(s=>{const[a,b]=s.split(">");return{from:coord2idx(a),to:coord2idx(b),text:`${a} → ${b}`};});
+const SPEED=550*0.8; // 0.8倍速度
+async function play(){if(playing)return;playing=true;paused=false;status('再生中…');while(ptr<SCRIPT.length){if(paused){await new Promise(r=>setTimeout(r,60));continue;}const step=SCRIPT[ptr++];const[y1,x1]=step.from,[y2,x2]=step.to,ym=(y1+y2)/2,xm=(x1+x2)/2;if([board[y1][x1],board[ym][xm],board[y2][x2]].includes(-1)){movesOut(`(無効) ${step.text}`);continue;}applyMove(step.from,step.to);render();movesOut(`${ptr}. ${step.text}`);await new Promise(r=>setTimeout(r,SPEED));}status('終了');playing=false;paused=false;}
+loadBtn.addEventListener('click',()=>{resetBoard();movesClear();movesOut('例題をロードしました（中央空き）');});pauseBtn.addEventListener('click',()=>{if(!playing)return;paused=!paused;pauseBtn.textContent=paused?'▶ 再開':'⏸ 一時停止';});playBtn.addEventListener('click',()=>{if(ptr===0)movesClear();play();});stepBtn.addEventListener('click',()=>{if(playing)return;if(ptr===0)movesClear();paused=false;playing=true;const step=SCRIPT[ptr++];if(step){applyMove(step.from,step.to);render();movesOut(`${ptr}. ${step.text}`);}playing=false;});resetBtn.addEventListener('click',()=>{resetBoard();movesClear();});
+buildGrid();resetBoard();
+</script>
+<a href="pegusoli.html">▶ 攻略サイトへ</a>
+</body>
+</html>

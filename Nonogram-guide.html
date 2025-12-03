@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>イラストロジック（お絵かきロジック）の解き方・攻略ガイド</title>
+<style>
+body {
+  font-family: sans-serif;
+  max-width: 800px;
+  margin: 40px auto;
+  padding: 0 20px;
+  line-height: 1.8;
+}
+h1, h2, h3 {
+  margin-top: 32px;
+}
+code {
+  background: #eee;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+table {
+  border-collapse: collapse;
+  margin: 20px 0;
+}
+td, th {
+  border: 1px solid #aaa;
+  padding: 6px 10px;
+  text-align: center;
+}
+.back-button {
+  display: inline-block;
+  padding: 12px 24px;
+  background: #ffffff;
+  border: 2px solid #333;
+  border-radius: 12px;
+  text-decoration: none;
+  color: #333;
+  font-size: 16px;
+  font-weight: bold;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  transition: 0.2s;
+}
+.back-button:hover {
+  background: #f0f0f0;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+}
+</style>
+</head>
+<body>
+
+<h1>イラストロジック（ノノグラム）の解き方・攻略ガイド</h1>
+<a href="habu.html" class="back-button">攻略ハブに戻る</a>
+<p>
+イラストロジック（ノノグラム / お絵かきロジック）は、
+<strong>数字を手がかりにマス目を塗っていく論理パズル</strong>です。
+完成すると絵が浮かび上がるため、論理パズルの中でも人気の高い形式です。
+</p>
+
+<hr>
+
+<h2>基本ルール</h2>
+
+<p>
+各行・列の数字は、<strong>塗るマスの塊の長さ</strong>を表しています。
+</p>
+
+<table>
+<tr><th>数字</th><th>意味</th></tr>
+<tr><td>5</td><td>5マス連続で塗る</td></tr>
+<tr><td>3 2</td><td>3マス塗って、1マス以上空けて、2マス塗る</td></tr>
+</table>
+
+<p>
+重要な点は、
+<strong>数字の塗りブロック同士は必ず1マス以上の空白で区切られる</strong>
+ことです。
+</p>
+
+<hr>
+
+<h2>攻略の基本戦略</h2>
+
+<h3>① 最大配置と最小配置の重なりを見る</h3>
+
+<p>
+例えば 10 マスの行に <code>5</code> がある場合、
+その 5 マスは次のように「端に寄せられる最大」と「反対に寄せられる最大」が決まります。
+</p>
+
+<p>
+その2つの配置の<strong>重なる部分は必ず塗り</strong>になります。
+これを <strong>オーバーラップ推理</strong> と呼びます。
+</p>
+
+<h3>② 塊同士は最低1マス空ける</h3>
+<p>
+数字が複数並んでいる場合、必ず <strong>区切りの空白を置く</strong> 必要があります。
+これは強制情報になるので、確定させます。
+</p>
+
+<h3>③ 行と列を交互に見る</h3>
+<p>
+行だけ、列だけを考えるのではなく、<strong>埋まった結果を別方向に反映する</strong>ことが重要です。
+</p>
+
+<hr>
+
+<h2>例題で理解する</h2>
+
+<p>以下は 7 マス行の例：</p>
+
+<table>
+<tr><th>数字</th><th>行</th></tr>
+<tr><td>3</td><td>□ □ □ □ □ □ □</td></tr>
+</table>
+
+<p>
+3マス連続を端に寄せると以下になります。
+</p>
+
+<pre>
+左に寄せた場合：■■■□□□
+右に寄せた場合：□□□■■■
+</pre>
+
+<p>
+重なっている中央部分は必ず塗られます：
+</p>
+
+<pre>
+重なり：□□■■□
+</pre>
+
+<p>
+→ このように、<strong>最大配置と最小配置の共通部分は確定塗り</strong> です。
+</p>
+
+<hr>
+
+<h2>慣れると強い推理パターン</h2>
+
+<ul>
+<li>大きい数字はオーバーラップが起きやすい</li>
+<li>残りマス数と数字合計を比較する</li>
+<li>列で決まった情報は行に戻す（交互処理）</li>
+<li>迷ったら保留し、確定情報を優先する</li>
+</ul>
+
+<p>
+これらはすべて、<strong>人間の上級者が自然と使っている推理そのもの</strong>です。
+</p>
+
+<hr>
+
+<h2>実際に解いてみよう</h2>
+
+<p>
+実際にマスを塗り、推理を試せるインタラクティブ版はこちら：
+</p>
+
+<p><a href="Nonogram.html">→ イラストロジックをプレイする</a></p>
+
+</body>
+</html>

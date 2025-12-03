@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Lights Out 入門ガイド｜遊び方・コツ・豆知識</title>
+<style>
+  :root{
+    --bg1:#0b1024; --bg2:#0f172a; --text:#e5e7eb; --sub:#94a3b8; --accent:#60a5fa;
+    --on:#ffd54f; --off:#1f2937; --border:#233143;
+    --card:#0f172acc; --shadow:0 10px 30px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box} body{
+    margin:0; font-family: system-ui,-apple-system,"Segoe UI",Roboto,"Hiragino Sans","Noto Sans JP",sans-serif;
+    color:var(--text); background:linear-gradient(180deg,var(--bg1),var(--bg2) 35%,var(--bg1));
+    line-height:1.75;
+  }
+  header{
+    position:sticky; top:0; z-index:10; backdrop-filter: blur(6px);
+    background: linear-gradient(180deg, rgba(15,23,42,.9), rgba(15,23,42,.6));
+    border-bottom:1px solid rgba(255,255,255,.08);
+  }
+  .wrap{max-width:960px; margin:0 auto; padding:14px 18px;}
+  .title{display:flex; gap:14px; align-items:center; justify-content:space-between}
+  .title h1{margin:0; font-size:clamp(18px,3.2vw,28px); letter-spacing:.02em}
+  .playbtn{
+    background:#3b82f6; color:#fff; font-weight:700; border:none; border-radius:12px;
+    padding:10px 16px; cursor:pointer; box-shadow:var(--shadow);
+  }
+  main{padding:16px}
+  section{max-width:960px; margin:18px auto}
+  .card{
+    background:var(--card); border:1px solid rgba(255,255,255,.08);
+    border-radius:16px; padding:18px; box-shadow:var(--shadow);
+  }
+  h2{margin:0 0 10px; font-size:clamp(18px,2.5vw,22px); color:#cfe3ff}
+  p,li{color:#dbe2ea}
+  ul,ol{margin:8px 0 0 20px}
+  .hint{color:var(--sub); font-size:14px}
+  .twocol{display:grid; gap:14px; grid-template-columns:1fr; }
+  @media(min-width:860px){ .twocol{grid-template-columns:1.1fr .9fr} }
+  .miniGrid{
+    --n:5; --cell:28px; --gap:6px;
+    display:grid; grid-template-columns:repeat(var(--n),var(--cell)); gap:var(--gap);
+    justify-content:center; margin:10px 0 6px;
+  }
+  .miniCell{
+    width:var(--cell); height:var(--cell); border-radius:8px; border:1px solid var(--border);
+    background:var(--off); box-shadow: inset 0 0 0 1px rgba(255,255,255,.06);
+    cursor:pointer; transition:transform .06s ease, background .15s ease;
+  }
+  .miniCell.on{ background:var(--on); }
+  .kbd{display:inline-block; border:1px solid #334155; background:#111827; color:#cbd5e1;
+       padding:2px 6px; border-radius:6px; font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:.95em}
+  .tips{display:grid; gap:12px}
+  .tips .tip{background:#0b1328b0; border:1px dashed #35507a; border-radius:12px; padding:12px}
+  .fact{color:#a7f3d0}
+  footer{color:var(--sub); text-align:center; padding:22px 10px}
+  a{color:#8ab9ff; text-decoration:none}
+.back-button {
+  display: inline-block;
+  padding: 12px 24px;
+  background: #ffffff;
+  border: 2px solid #333;
+  border-radius: 12px;
+  text-decoration: none;
+  color: #333;
+  font-size: 16px;
+  font-weight: bold;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  transition: 0.2s;
+}
+.back-button:hover {
+  background: #f0f0f0;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap title">
+    <h1>Lights Out 入門ガイド｜遊び方・コツ・豆知識</h1>
+    <a href="habu.html" class="back-button">攻略ハブに戻る</a>
+    <button class="playbtn" onclick="location.href='lightout.html'">▶ 遊ぶ（解法ツールへ）</button>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="card twocol">
+    <div>
+      <h2>Lights Outってなに？</h2>
+      <p>
+        マス目（3×3〜7×7）をクリックすると、<b>そのマスと上下左右</b>がON/OFF反転します。<br>
+        目標は<b>全部をOFF</b>（暗く）にすること。シンプルだけど奥が深い定番パズルです。
+      </p>
+      <p class="hint">下のミニ盤面はクリックで動きます（体験デモ）。</p>
+      <div id="mini" class="miniGrid" aria-label="デモ盤面"></div>
+      <p class="hint">※ デモは5×5。実戦は上の「▶ 遊ぶ」から。</p>
+    </div>
+    <div>
+      <h2>最短手はどうやって出すの？</h2>
+      <p>
+        盤面を0/1で表し、<span class="kbd">A × x = b（mod 2）</span> を<b>ガウス消去法</b>で解くと
+        「押すべきマス（x）」が求まります。順番は関係なく、<b>押す/押さないの組み合わせ</b>が答えです。
+      </p>
+      <ul>
+        <li><b>同じマスを2回押す</b> → 打ち消して押していないのと同じ</li>
+        <li>押す順序は<b>入れ替えてOK</b>（可換／交換可能）</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>遊び方（かんたん3ステップ）</h2>
+    <ol>
+      <li><b>編集モードON</b>で、好きな配置にして「問題」を作る（1マスだけ反転）</li>
+      <li>モードを<b>OFF</b>にすると、上下左右も反転する通常ルールで遊べます</li>
+      <li>むずかしいときは<b>自動解法</b>で最短手を表示（押す場所はマークで見える）</li>
+    </ol>
+    <p class="hint">※ 自動解法のマークは「全OFF」を押すまで残ります。復習に便利！</p>
+  </section>
+
+  <section class="card twocol">
+    <div>
+      <h2>コツ・定石（初心者向け）</h2>
+      <ul class="tips">
+        <li class="tip">
+          <b>上から順に消していく</b><br>
+          1行目のONを見ながら2行目を押して消す → 同様に下へ。
+          最下段だけは残り方に応じて微調整。直感的で強い基本戦略。
+        </li>
+        <li class="tip">
+          <b>3個並びは真ん中</b><br>
+          縦横にONが3つ並んだら中央を押すと効率よく消えることが多い。
+        </li>
+        <li class="tip">
+          <b>十字は中心</b><br>
+          十字形にONがあるなら中心を押すのが第一候補。
+        </li>
+        <li class="tip">
+          <b>角のONは内側とセット</b><br>
+          隅のONは隣接が少ないので、1つ内側のマスと合わせて処理すると消しやすい。
+        </li>
+      </ul>
+    </div>
+    <div>
+      <h2>よくある疑問</h2>
+      <ul>
+        <li><b>順番で結果は変わる？</b> → 変わりません。二回押すと相殺されます。</li>
+        <li><b>解けない配置はある？</b> → あります（サイズによって存在）。自動解法はその判定も行います。</li>
+        <li><b>最短手だけ出せる？</b> → 基本解から最小手数に絞る拡張も可能です（希望があれば後日アップデート可）。</li>
+      </ul>
+      <p class="hint">※ 本サイトの「自動解法」はGF(2)ガウス消去で解を計算します。</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>豆知識（ライトに楽しむ小ネタ）</h2>
+    <ul>
+      <li class="fact"><b>操作は“足し算 mod 2”</b>。押す＝1を足す、二回押す＝0に戻る。</li>
+      <li class="fact"><b>順序は自由</b>。押す操作は可換なので、どの順番でも同じ最終結果。</li>
+      <li class="fact"><b>対称性</b>：盤を左右・上下反転しても本質は同じ。対称な位置は同じ扱いで考えられます。</li>
+      <li class="fact"><b>行を決めると下が決まる</b>：上から順に“消す”アルゴリズムは人間向けの実践的定石。</li>
+      <li class="fact"><b>バリエーション多数</b>：トーラス（端がつながる）版や、斜めも反転する派生ルールもあります。</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>次のステップ</h2>
+    <ul>
+      <li>実戦練習：<a href="lightout.html">▶ 解法ツールへ</a></li>
+      <li>サイズいろいろ：3×3〜7×7で手触りの違いを体験</li>
+      <li>研究派は：行列表現とランク（階数）を調べて“解なし条件”も学べます</li>
+    </ul>
+  </section>
+
+</main>
+
+
+<script>
+/* ミニ体験デモ（5×5） */
+(() => {
+  const N = 5;
+  const el = document.getElementById('mini');
+  el.style.setProperty('--n', N);
+  const b = Array(N*N).fill(0);
+  function idx(r,c){return r*N+c}
+  function nbr(i){
+    const r=Math.floor(i/N), c=i%N, a=[i];
+    if(r>0)a.push(i-N); if(r<N-1)a.push(i+N);
+    if(c>0)a.push(i-1); if(c<N-1)a.push(i+1);
+    return a;
+  }
+  function draw(){
+    el.innerHTML='';
+    for(let i=0;i<N*N;i++){
+      const d=document.createElement('div');
+      d.className='miniCell'+(b[i]?' on':'');
+      d.onclick=()=>{ nbr(i).forEach(j=>b[j]^=1); draw(); };
+      el.appendChild(d);
+    }
+  }
+  // 最初は軽くランダムで点灯
+  for(let i=0;i<N*N;i++) if(Math.random()<0.28) b[i]=1;
+  draw();
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>解説ハブ（ルール・定石の解説集）</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 20px;
+      background: #e9f1ff; /* ★ ベース色を少し青寄りに変更 */
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+      color: #1f4b99; /* ★ 見出しを濃い青系に */
+    }
+
+    h2 {
+      max-width: 980px;
+      margin: 0 auto 10px auto;
+      padding: 8px 0;
+      padding-left: 4px;
+      color: #1f4b99;
+    }
+
+    /* ★ カードレイアウトはhabu.htmlと同じ */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr); /* PCで3列固定 */
+      gap: 20px;
+      width: 100%;
+      max-width: 980px;
+      margin: 0 auto;
+      align-items: start;
+    }
+
+    /* スマホ対応 */
+    @media (max-width: 800px) {
+      .cards {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    @media (max-width: 520px) {
+      .cards {
+        grid-template-columns: repeat(1, 1fr);
+      }
+    }
+
+    /* カード本体：背景と枠線の色だけ変更 */
+    .card {
+      background: #ffffff;
+      border-radius: 8px;
+      padding: 16px;
+      box-shadow: 0 2px 5px rgba(0,0,50,0.08);
+      border-top: 4px solid #4d7cff; /* ★ 上のラインにアクセントカラー */
+      transition: 0.2s;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 150px;
+      cursor: pointer;
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 10px rgba(0,0,80,0.18);
+    }
+
+    .card a {
+      text-decoration: none;
+      color: #12335c;
+      font-weight: bold;
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .card p {
+      margin: 0;
+      color: #444;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 40px;
+      color: #555;
+      font-size: 14px;
+    }
+
+    footer a {
+      color: #1f4b99;
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+    .hub-button-area {
+  text-align: center;
+  margin: 10px 0 30px 0;
+}
+
+.hub-button {
+  display: inline-block;
+  padding: 10px 20px;
+  background: #4d7cff;       /* ボタン色（青） */
+  color: #fff;
+  font-weight: bold;
+  border-radius: 25px;       /* 丸いボタン */
+  text-decoration: none;
+  box-shadow: 0 2px 5px rgba(0,0,50,0.15);
+  transition: 0.2s;
+}
+
+.hub-button:hover {
+  background: #1f4b99;       /* ホバー時に少し濃く */
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0,0,80,0.25);
+}
+
+  </style>
+</head>
+<body>
+
+<h1>ゲーム解説ハブ</h1>
+
+<!-- ▼ 解法ハブボタン（タイトル直下） -->
+<div class="hub-button-area">
+  <a href="habu.html" class="hub-button">攻略ハブへ戻る</a>
+</div>
+
+<section style="max-width:980px;margin:0 auto 24px;background:#fff;border-radius:8px;padding:16px 18px;box-shadow:0 2px 5px rgba(0,0,0,.08);">
+  <h2 style="margin:0 0 8px;font-size:22px;">最善を示し、愚行権を創りだす。</h2>
+  <p style="margin:0;color:#444;">
+    このサイトは<strong>ゲームの最善手を得る事</strong>を目的にAIの活用で作られました。<br>
+    このサイトは最善解を提示しますが、勝利や駆け引き、そして学びのために、
+    あえて最善以外を選ぶ自由（＝愚行権）を尊重します。
+  </p>
+</section>
+
+
+<h2>パズル系の解説</h2>
+<div class="cards">
+
+  <div class="card">
+    <!-- ★ 各リンク先は実際のファイル名に合わせて書き換えてください -->
+    <a href="ABCPlace-guide.html">ABCプレースの解説</a>
+    <p>ルールの詳しい説明と、よくある詰まりポイント、簡単な戦略をまとめたページ。</p>
+  </div>
+
+  <div class="card">
+    <a href="Nonogram-guide.html">イラストロジックの解説</a>
+    <p>基本ルールから、「確定マス」の見つけ方、難問で使うテクニックまで解説。</p>
+  </div>
+
+  <div class="card">
+    <a href="hitohude-guide.html">一筆書きパズルの解説</a>
+    <p>オイラー路・オイラー閉路の考え方を、パズル向けに分かりやすく紹介。</p>
+  </div>
+
+  <div class="card">
+    <a href="lightout-guide.html">Lights Out の解説</a>
+    <p>「押すと上下左右が反転する」ルールと、線形代数（ガウス消去）との関係をざっくり解説。</p>
+  </div>
+
+</div>
+
+
+<h2>カードゲーム系の解説</h2>
+<div class="cards">
+
+  <div class="card">
+    <a href="sevens(card)-guide.html">七並べの解説</a>
+    <p>基本ルールと、手札管理・ブロック・トンネルなどの考え方を紹介。</p>
+  </div>
+
+</div>
+
+
+<h2>ボードゲーム系の解説</h2>
+<div class="cards">
+
+  <div class="card">
+    <a href="hakoiri-guide.html">箱入り娘（Klotski）の解説</a>
+    <p>代表的な初期配置の紹介と、「カギとなるブロック」を意識した動かし方。</p>
+  </div>
+
+  <div class="card">
+    <a href="pegusoli-guide.html">ペグソリティアの解説</a>
+    <p>中央残し問題の典型手順や、「戻り手」を減らすための考え方を解説。</p>
+  </div>
+
+  <div class="card">
+    <a href="syougi-yuudou.html">将棋の解説</a>
+    <p>駒の種類が多すぎるボードゲーム。持ち駒制度のせいで解析が難しすぎる。</p>
+  </div>
+
+  <div class="card">
+    <a href="igo-yuudou.html">囲碁の解説</a>
+    <p>必要な道具が3種類しかないボードゲーム。だが広すぎる。</p>
+  </div>
+
+  <div class="card">
+    <a href="chess-yuudou.html">チェスの解説</a>
+    <p>多分一番有名なボードゲーム。キャッスリングという“一手で二つの駒を動かす”独特のルールが特徴的。</p>
+  </div>
+
+</div>
+
+<script>
+  // ★ カード全体をクリックでリンクに飛ぶ処理（habu.htmlと同じ）
+  document.querySelectorAll('.card').forEach(card => {
+    card.addEventListener('click', () => {
+      const link = card.querySelector('a');
+      if (link) link.click();
+    });
+  });
+</script>
+
+<hr>
+<footer>
+  <a href="privacy.html">プライバシーポリシー</a> |
+  <a href="contact.html">お問い合わせ</a> |
+  <a href="habu.html">解法ハブへ戻る</a>
+</footer>
+
+</body>
+</html>
